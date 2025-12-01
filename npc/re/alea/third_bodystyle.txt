@@ -1,0 +1,42 @@
+// Switch Body Styles for 3rd classes only. Works fine.
+// Warning in case if there will be any bug, just replace the script outside the prontera.
+// But i've tested it a lot, and it must be good 2024-08-17
+prontera,120,207,5	script	Alternative Outfit	4_M_SE_MOON,{
+
+	mes "[Alternative Outfit]";
+	mes "For 3rd classes i have alternative clothing. But only for 3rd class";
+	mes "I can change it for free for you if you become within 3rd class";
+	next;	
+	mes "[Alternative Outfit]";
+
+	.@equip_id = getequipid(EQI_COSTUME_GARMENT);
+	if(.@equip_id >= 64500 && .@equip_id <= 64549) {
+		mes "Sorry, but you can't use alternative body styles with another sprites dresses. It will cause game crash";
+		close;
+	}
+
+	set @eac, eaclass();
+	if(Class >= JOB_RUNE_KNIGHT && Class <= JOB_BABY_RUNE_KNIGHT) {
+		mes "Would you like to change your body style?";
+		switch(select("Alternative Outfit", "Original Body Style", "Exit"))
+		{
+			case 1: 
+				nude;
+				atcommand "@bodystyle 1"; 
+				emotion ET_OK; 
+				break;
+			case 2: 
+				nude;
+				atcommand "@bodystyle 0";
+				emotion ET_OK;
+				break;
+			case 3: 
+				break;
+		}
+	} else {
+		mes "Sorry, but i provide my services for free just for 3rd classes only";
+		close;
+	}
+	end;
+
+}

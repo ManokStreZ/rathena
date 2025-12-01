@@ -1,0 +1,50 @@
+-	script	npc_announcer	FAKE_NPC,{
+
+mes .npc$;
+mes "Would you like to make an announcement that everyone on the server will see?";
+mes "Price: ^0000cc"+ callfunc("F_InsertComma", .price) +"^000000";
+
+switch(select("Create Announce", "Exit"))
+{
+	case 1:
+
+		mes "^cc0000Enter your message:^000000";
+		input .announce$;
+
+		if(Zeny < .price) {
+			next;
+			mes .npc$;
+			mes "You have insufficient Zeny for the announcement";
+			break;
+		}
+
+		if(.next_announe_delay > gettimetick(2)) {
+			next;
+			mes .npc$;
+			mes "Please wait cooldown:"+ callfunc("Time2Str",.next_announe_delay);
+			break;
+		}
+
+		if(Zeny >= .price) {
+			Zeny -= .price;
+			.next_announe_delay = gettimetick(2) + .delay;
+			announce "[ "+strcharinfo(0)+" ] said: '"+ .announce$ +"'",bc_all,0x66ff00;
+		}
+		break;
+
+	case 2:
+		mes "Goodbye ^_^";
+		break;
+}
+end;
+
+OnInit:
+	.npc$ = "["+ strnpcinfo(1) +"]";
+
+	.delay = 30; // seconds
+	.price = 1000000;
+	end;
+
+}
+
+prontera,164,159,4	duplicate(npc_announcer)	Announcer#prt	4_M_TWMIDMAN

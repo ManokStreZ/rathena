@@ -1,0 +1,60 @@
+// getarg(0) = Save mapname
+// getarg(1) = Save X
+// getarg(2) = Save Y
+function	script	FC_kafra	{
+
+	.@savemap$ = getarg(0);
+	.@save_x = getarg(1);
+	.@save_y = getarg(2);
+
+	if(getargcount() != 3) {
+		dispbottom "[Kafra Error]: Report to the Admin";
+		return;
+	}
+
+	cutin "kafra_03",2;
+
+	mes "[Kafra Employee]";
+	mes "Welcome to the";
+	mes "Kafra Corporation.";
+	mes "The Kafra services";
+	mes "are always on your side.";
+	mes "How may I assist you?";
+
+	switch(select("Save", "Use Storage", "Cancel"))
+	{
+		case 1:
+			savepoint .@savemap$, .@save_x, .@save_y, 1, 1;
+			break;
+		case 2:
+			if(Zeny >= 40) {
+				Zeny -= 40;
+				close2;
+				openstorage();
+			} else {
+				next;
+				mes "[Kafra Employee]";
+				mes "You don't have enough Zeny, you need 40.";
+			}
+			break;
+		case 3:
+			break;
+	}
+
+	if(playerattached()) {
+		emotion ET_THANKS, getcharid(3);
+		cutin "",255;
+	}
+	end;
+}
+
+// Duplicates
+prontera,157,187,4	script	Kafra Employee#go0	4_F_DRKAFRA01,{ callfunc "FC_kafra","prontera",155,179; end; }
+morocc,156,97,4	script	Kafra Employee#go1	4_F_DRKAFRA01,{ callfunc "FC_kafra","morocc",156,93; end; }
+geffen,120,62,0	script	Kafra Employee#go2	4_F_DRKAFRA01,{ callfunc "FC_kafra","geffen",119,59; end; }
+payon,181,104,4	script	Kafra Employee#go3	4_F_DRKAFRA01,{ callfunc "FC_kafra","payon",179,100; end; }
+alberta,28,229,0	script	Kafra Employee#go4	4_F_DRKAFRA01,{ callfunc "FC_kafra","alberta",32,234; end; }
+izlude,120,118,5	script	Kafra Employee#go5	4_F_DRKAFRA01,{ callfunc "FC_kafra","izlude",127,142; end; }
+
+
+

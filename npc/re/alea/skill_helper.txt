@@ -1,0 +1,103 @@
+prontera,141,189,4	script	Skill Helper	4_M_COSTELL,{
+
+
+switch(select("Get Rental Service", "Get Platinum SKills", "Reset Skills and Points"))
+{
+	case 1:
+		callsub S_breeder;
+		break;
+	case 2:
+		callsub S_platinumSkills;
+		break;
+	case 3:
+		callsub S_ResetGirl;
+		break;
+}
+end;
+
+
+S_ResetGirl:
+	setarray .@Reset,	50000,	50000,	90000,	0;
+	mes "[Reseter]";
+	if(.@Reset[3] && reset_limit > .@Reset[3]) {
+		mes "Sorry you can only reset "+callfunc("F_InsertPlural",.@Reset[3],"time")+" in your life.";
+		close;
+	}
+	mes "I am the Reseter.";
+	mes "Reset Stats: "+ callfunc("F_InsertComma",.@Reset[1]) +"z";
+	mes "Reset Skills: "+ callfunc("F_InsertComma",.@Reset[0]) +"z";
+	mes "Reset Both: "+ callfunc("F_InsertComma",.@Reset[2]) +"z";
+	if(.@Reset[3]) mes "You may only reset "+callfunc("F_InsertPlural",.@Reset[3],"time")+", so use "+((.@Reset[3]>1)?"them":"it")+" wisely.";
+	mes "Please select the service you want:";
+	next;
+	set .@i,(select("^FF3355Reset Skills:Reset Stats:Reset Both^000000:Cancel"));
+	if(.@i > 3) close;
+	mes "[Reseter]";
+	if (Zeny < .@Reset[.@i-1]) {
+		mes "Sorry, you don't have enough Zeny.";
+		close;
+	}
+	if(.@Reset[3]){
+		mes "You can only reset "+callfunc("F_InsertPlural",.@Reset[3],"time")+" in your life, are you sure?";
+		if(select("Let me think:That's fine") == 1) close;
+	}
+	set Zeny, Zeny-.@Reset[.@i-1];
+	if(.@i&1){
+		sc_end_class;
+		ResetSkill;
+	}
+	if(.@i&2) ResetStatus;
+	mes "There you go!";
+	if(.@Reset[3]) set reset_limit,reset_limit + 1;
+	close;
+	return;
+	end;
+
+
+S_platinumSkills:
+	mes "[Platinum Skill NPC]";
+	mes "I can give you the special skills available to your job.";
+	mes "Would you like these skills now?";
+	next;
+	if (select("Yes Please:No") == 2) {
+		mes "[Platinum Skill NPC]";
+		mes "Have a nice day... >.>";
+		close;
+	}
+	callfunc "F_GetPlatinumSkills";
+	mes "[Platinum Skill NPC]";
+	mes "There you go!";
+	close;
+	return;
+	end;
+
+S_breeder:
+	if (ismounting()) {
+		message strcharinfo(0),"You must first remove your mount.";
+		end;
+	} else if (((eaclass()&EAJ_THIRDMASK)==EAJ_RANGER) && !countitem(6124)) {
+		if (!checkfalcon() && getskilllv("HT_FALCON") && !checkwug()) {
+			if(select(" ~ Falcon: ~ Warg")==1) setfalcon;
+			else getitem 6124,1; //Wolf's_Flute
+		} else getitem 6124,1; //Wolf's_Flute
+	} else if (((eaclass()&EAJ_THIRDMASK)==EAJ_MECHANIC) && !checkcart() && getskilllv("MC_PUSHCART")) {
+		if (!checkmadogear() && getskilllv("NC_MADOLICENCE")) {
+			if(select(" ~ Cart: ~ Mado")==1) setcart;
+			else setmadogear;
+		} else setcart;
+	} else if (!checkcart() && getskilllv("MC_PUSHCART")) setcart;
+	else if (!checkfalcon() && getskilllv("HT_FALCON") && !checkwug()) setfalcon;
+	else if (!checkriding() && !checkdragon() && getskilllv("KN_RIDING")) {
+		if ((eaclass()&EAJ_THIRDMASK)==EAJ_RUNE_KNIGHT) setdragon;
+		else setriding;
+	} else if (!checkmadogear() && getskilllv("NC_MADOLICENCE")) setmadogear;
+	else {
+		message strcharinfo(0),"You do not meet requirements to rent.";
+		end;
+	}
+	specialeffect2 EF_TEIHIT3;
+	return;
+	end;
+
+
+}

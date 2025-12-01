@@ -1,0 +1,60 @@
+-	script	npc_donation_system	-1,{
+
+OnPCLoginEvent:
+	if(.fluxcp_cashpoints)
+	{
+		query_sql(" SHOW TABLES LIKE 'cp_credits' ", .@exist$);
+		if (.@exist$ == "") {
+			end;
+		}
+
+		query_sql(" SELECT `balance` FROM `cp_credits` WHERE `account_id` = "+getcharid(3)+" ", .@balance);
+
+		if (.@balance > 0) {
+			query_sql(" UPDATE `cp_credits` SET `balance` = 0 WHERE `account_id` = "+getcharid(3)+" ");
+			atcommand "@cash "+.@balance;
+			dispbottom "Cashpoints have been added to your balance.",0XE29926;
+		}
+		end;
+	}
+
+	if(.rocp_cashpoints)
+	{
+		query_sql(" SELECT cashpoints "+
+		          " FROM `login` "+
+		          " WHERE account_id='"+getcharid(3)+"' ", .@credits);
+
+		if(.@credits > 1) {
+			query_sql(" UPDATE `login` SET cashpoints='0' WHERE account_id='"+getcharid(3)+"'");
+			logmes "["+ .@credits +"]: donated, account_id: "+getcharid(3)+ ", char: "+ strcharinfo(0);
+
+			atcommand "@cash "+.@credits;
+			dispbottom "Cashpoints have been added to your balance.",0XE29926;
+
+			$cff_total += .@credits; // record  total donated money for sending these errors to telegram
+			debugmes "[Donation]: "+getcharid(3)+" +"+callfunc("F_InsertComma",.@credits)+" --> "+callfunc("F_InsertComma",$cff_total);
+		}
+	}
+
+	end;
+
+// Configuration part
+OnInit:
+	// Required fluxCP from https://ragnarokservice.top/
+	.fluxcp_cashpoints = false; // set true if you using FluxCP for donations
+	// Required RO Control Panel (roCP) from https://ragnarokservice.top/
+	.rocp_cashpoints = false; // set to true if you using RagnarokServiceTop Control Panel
+	end;
+
+}
+
+prontera,168,189,4	script	Cashpoints::donpront	4_F_MAYSEL,{
+
+	mes "[^0055CCDonations^000000]";
+	mes "Account Cashpoints: ^D83131"+ callfunc("F_InsertComma",#CASHPOINTS) +"^000000";
+	mes "This is a rare currency like Zeny that opens up a lot of opportunities in the game. Used in mostly all NPCs and ^FF0000/cashshop^000000";
+	mes "<URL>Click and get Cashpoints instantly<INFO>" + "https://ragnarokservice.top/" + ",1024,768</INFO></URL>";
+	close;
+
+}
+

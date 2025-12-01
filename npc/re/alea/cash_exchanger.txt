@@ -1,0 +1,118 @@
+// Simple NPC for forcing players to gather more in-game items/goods for cashpoints motivation.
+prontera,139,192,5	script	Exchanger	4_M_LAZY,{
+
+switch(select("Zeny <=> Cash",
+			  "Cash <=> Zeny",
+			  "Vbadge <=> Cash",
+			  "Bbadge <=> Cash",
+			  "Kbadge <=> Cash",
+			  "EventPoint <=> Cash"))
+{
+	// sub: 						from,    to,    send,   receive
+	case 1: callsub S_exchange2cash                                        , "Zeny"          , "Cash" , 10000000 , 100; break;
+	case 2: callsub S_exchange2cash                                        , "Cash"          , "Zeny" , 100      , 5000000; break;
+	case 3: callsub S_exchange2cash                                        , "Valor Badge"   , "Cash" , 500      , 100; break;
+	case 4: callsub S_exchange2cash                                        , "Bravery Badge" , "Cash" , 500      , 100; break;
+	case 5: callsub S_exchange2cash                                        , "KVM Badge"     , "Cash" , 200      , 100; break;
+	case 6: callsub S_exchange2cash                                        , "EventPoint"    , "Cash" , 50       , 100; break;
+}
+end;
+
+// arg(0) = Src, arg(1) = Dst, arg(2) = Min, arg(3) = price for min
+S_exchange2cash:
+	
+	mes "[Exchanger]";
+	.@format$ = "^104ab7%d^000000 ^7ca751%s^000000 for ^dd4747%d^000000 ^9f7338%s^000000";
+	mes sprintf(.@format$, getarg(2), getarg(0), getarg(3), getarg(1));
+	mes "Would you like to exchange?";
+	
+	if(select("No:Yes") == 1)
+		return;
+
+	
+	// Zeny to Cashpoints
+	if(getarg(0) == "Zeny") {
+		if(Zeny >= getarg(2)) {
+			Zeny -= getarg(2);
+			#CASHPOINTS += getarg(3);
+			specialeffect2 EF_TEMP_OK;
+			dispbottom "[Exchanger]: "+ getarg(3) +" of "+ getarg(1) + " received. Total Cashpoints: "+ #CASHPOINTS, 0xFF0000;
+			return;
+		} else {
+			specialeffect2 EF_TEMP_FAIL;
+			return;
+		}
+	}
+
+	// Cashpoints to Zeny
+	if(getarg(0) == "Cash") {
+		if(#CASHPOINTS >= getarg(2)) {
+			#CASHPOINTS -= getarg(2);
+			Zeny += getarg(3);
+			specialeffect2 EF_TEMP_OK;
+			dispbottom "[Exchanger]: "+ getarg(3) +" of "+ getarg(1) + " received. Total Cashpoints: "+ #CASHPOINTS, 0xFF0000;
+			return;
+		} else {
+			specialeffect2 EF_TEMP_FAIL;
+			return;
+		}
+	}
+
+	// Valor Badge (id7829) to Cashpoints
+	if(getarg(0) == "Valor Badge") {
+		if(countitem(7829) >= getarg(2)) {
+			delitem 7829, getarg(2);
+			#CASHPOINTS += getarg(3);
+			specialeffect2 EF_TEMP_OK;
+			dispbottom "[Exchanger]: "+ getarg(3) +" of "+ getarg(1) + " received. Total Cashpoints: "+ #CASHPOINTS, 0xFF0000;
+			return;
+		} else {
+			specialeffect2 EF_TEMP_FAIL;
+			return;
+		}
+	}
+
+	// Bravery Badge (id7828) to Cashpoints
+	if(getarg(0) == "Bravery Badge") {
+		if(countitem(7828) >= getarg(2)) {
+			delitem 7828, getarg(2);
+			#CASHPOINTS += getarg(3);
+			specialeffect2 EF_TEMP_OK;
+			dispbottom "[Exchanger]: "+ getarg(3) +" of "+ getarg(1) + " received. Total Cashpoints: "+ #CASHPOINTS, 0xFF0000;
+			return;
+		} else {
+			specialeffect2 EF_TEMP_FAIL;
+			return;
+		}
+	}
+
+	// KVM Badge (id6376) to Cashpoints
+	if(getarg(0) == "KVM Badge") {
+		if(countitem(6376) >= getarg(2)) {
+			delitem 6376, getarg(2);
+			#CASHPOINTS += getarg(3);
+			specialeffect2 EF_TEMP_OK;
+			dispbottom "[Exchanger]: "+ getarg(3) +" of "+ getarg(1) + " received. Total Cashpoints: "+ #CASHPOINTS, 0xFF0000;
+			return;
+		} else {
+			specialeffect2 EF_TEMP_FAIL;
+			return;
+		}
+	}
+
+	// EventPoint to Cashpoints
+	if(getarg(0) == "EventPoint") {
+		if(#EVENTPOINTS >= getarg(2)) {
+			#EVENTPOINTS -= getarg(2);
+			#CASHPOINTS += getarg(3);
+			specialeffect2 EF_TEMP_OK;
+			dispbottom "[Exchanger]: "+ getarg(3) +" of "+ getarg(1) + " received. Total Cashpoints: "+ #CASHPOINTS, 0xFF0000;
+			return;
+		} else {
+			specialeffect2 EF_TEMP_FAIL;
+			return;
+		}
+	}
+	return;
+	end;
+}
