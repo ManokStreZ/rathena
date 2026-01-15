@@ -50,9 +50,36 @@ prontera,147,173,5	script	Hunting Missions	4_CHN_GVG_01,{
 			callsub L_Generate, .@diff;
 			break;
 		case 2:
-			callshop "hunting_shop_visual",1;
-			npcshopattach "hunting_shop_visual";
-			end;
+			mes "[Hunting Missions]";
+			mes "Poin kamu: ^0000FF" + #HuntingPoint + "^000000";
+			next;
+
+			.@sel = select(
+				"Red Potion (5 Poin)",
+				"Yggdrasil Berry (50 Poin)",
+				"Battle Manual (100 Poin)",
+				"Bubble Gum (120 Poin)",
+				"Dead Branch (30 Poin)",
+				"Batal"
+			);
+
+			if (.@sel == 6) close;
+
+			setarray .@item[1], 501,607,12208,12210,604;
+			setarray .@cost[1], 5,50,100,120,30;
+
+			if (#HuntingPoint < .@cost[.@sel]) {
+				mes "[Hunting Missions]";
+				mes "Poin kamu tidak cukup.";
+				close;
+			}
+
+			#HuntingPoint -= .@cost[.@sel];
+			getitem .@item[.@sel], 1;
+
+			mes "[Hunting Missions]";
+			mes "Pembelian berhasil!";
+			close;
 		case 3:
 			mes "[Hunting Missions]";
 			mes "Aturan:";
@@ -149,6 +176,24 @@ OnNPCKillEvent:
 		}
 	}
 	end;
+	
+OnBuyItem:
+	// Cek poin
+	if (#HuntingPoint < @totalcost) {
+		dispbottom "[Hunting Missions] Poin kamu tidak cukup.";
+		end;
+	}
+
+	// Kurangi poin
+	#HuntingPoint -= @totalcost;
+
+	// Berikan item satu per satu
+	for (.@i = 0; .@i < @itemcount; .@i++) {
+		getitem @itemid[.@i], @amount[.@i];
+	}
+
+	dispbottom "[Hunting Missions] Pembelian berhasil!";
+	end;
 
 OnInit:
 	// Pengaturan Toko Penukaran Poin
@@ -161,4 +206,3 @@ OnInit:
 	}
 	end;
 }
--	shop	hunting_shop_visual	-1,512:10
