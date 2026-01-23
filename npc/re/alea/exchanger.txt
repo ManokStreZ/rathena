@@ -1,0 +1,88 @@
+// Lokasi: prontera,150,150 (Bisa kamu ubah sesuai keinginan)
+prontera,160,191,3	script	Exchanger Poin	4_EP16_HELMUT,{
+
+	.@zeny_per_cash = 1000000; // HARGA: 1.000.000 Zeny = 1 Cash Point
+	.@cash_per_zeny = 900000;  // HARGA: 1 Cash Point = 900.000 Zeny (Bisa kamu samakan atau bedakan)
+
+	mes "[Exchanger Poin]";
+	mes "Halo! Saya bisa membantu menukar mata uangmu.";
+	mes "Kurs hari ini:";
+	mes " > ^0000FF1 Cash Point^000000 = " + F_InsertComma(.@zeny_per_cash) + " Zeny";
+	mes "--------------------------------";
+	mes "Zeny kamu: ^0055FF" + F_InsertComma(Zeny) + "^000000";
+	mes "Cash kamu: ^0055FF" + F_InsertComma(#CASHPOINTS) + "^000000";
+	next;
+
+	switch(select("Tukar Zeny ke Cash:Tukar Cash ke Zeny:Batal")) {
+		case 1:
+			mes "[Zeny -> Cash]";
+			mes "Berapa ^0000FFCash Point^000000 yang ingin kamu beli?";
+			mes "(Harga: " + F_InsertComma(.@zeny_per_cash) + " Zeny / 1 Cash)";
+			next;
+			input .@amount;
+			
+			if (.@amount <= 0) {
+				mes "[Exchanger Poin]";
+				mes "Jumlah harus lebih dari 0.";
+				close;
+			}
+			
+			.@total_cost = .@amount * .@zeny_per_cash;
+			
+			if (Zeny < .@total_cost) {
+				mes "[Exchanger Poin]";
+				mes "Zeny kamu tidak cukup!";
+				mes "Dibutuhkan: " + F_InsertComma(.@total_cost) + " Zeny.";
+				close;
+			}
+			
+			Zeny -= .@total_cost;
+			#CASHPOINTS += .@amount;
+			mes "[Exchanger Poin]";
+			mes "Transaksi Berhasil!";
+			mes "Kamu menukar ^FF0000" + F_InsertComma(.@total_cost) + " Zeny^000000";
+			mes "Menjadi ^0000FF" + F_InsertComma(.@amount) + " Cash Point^000000.";
+			specialeffect2 EF_COIN;
+			close;
+
+		case 2:
+			mes "[Cash -> Zeny]";
+			mes "Berapa ^0000FFCash Point^000000 yang ingin kamu tukar?";
+			mes "(Hasil: " + F_InsertComma(.@cash_per_zeny) + " Zeny / 1 Cash)";
+			next;
+			input .@amount;
+
+			if (.@amount <= 0) {
+				mes "[Exchanger Poin]";
+				mes "Jumlah harus lebih dari 0.";
+				close;
+			}
+
+			if (#CASHPOINTS < .@amount) {
+				mes "[Exchanger Poin]";
+				mes "Cash Point kamu tidak cukup!";
+				close;
+			}
+
+			.@total_get = .@amount * .@cash_per_zeny;
+			
+			// Cek apakah Zeny melebihi batas (Max Zeny biasanya 2 Miliar)
+			if (Zeny + .@total_get > 2000000000) {
+				mes "[Exchanger Poin]";
+				mes "Zeny kamu akan penuh! Kosongkan dulu tasmu.";
+				close;
+			}
+
+			#CASHPOINTS -= .@amount;
+			Zeny += .@total_get;
+			mes "[Exchanger Poin]";
+			mes "Transaksi Berhasil!";
+			mes "Kamu menukar ^0000FF" + F_InsertComma(.@amount) + " Cash Point^000000";
+			mes "Menjadi ^FF0000" + F_InsertComma(.@total_get) + " Zeny^000000.";
+			specialeffect2 EF_COIN;
+			close;
+
+		case 3:
+			close;
+	}
+}
