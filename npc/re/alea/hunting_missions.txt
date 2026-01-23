@@ -2,207 +2,193 @@ prontera,147,173,5	script	Hunting Missions	4_CHN_GVG_01,{
 
 	mes "[Hunting Missions]";
 	mes "Halo, " + strcharinfo(0) + "!";
-	mes "Poin Misi kamu: ^0000FF" + #HuntingPoint + "^000000";
+	mes "Poin Misi: ^0000FF" + #HuntingPoint + "^000000";
 	next;
-	
-	if (Mission0 > 0) {
+
+	// =============================
+	// JIKA SEDANG ADA MISI AKTIF
+	// =============================
+	if (#MissionActive) {
+
 		mes "[Status Misi]";
 		mes "Target perburuanmu:";
 		.@complete = 0;
-		for (.@i = 0; .@i < .Quests; .@i++) {
-			.@m_id = getd("Mission" + .@i);
-			.@m_done = getd("Mission" + .@i + "_");
-			mes " > " + ((.@m_done >= #Mission_Amount) ? "^00FF00" : "^FF0000") + getmonsterinfo(.@m_id, MOB_NAME) + " ["+.@m_id+"] (" + .@m_done + "/" + #Mission_Amount + ")^000000";
-			if (.@m_done >= #Mission_Amount) .@complete++;
+
+		for (.@i = 0; .@i < #MissionCount; .@i++) {
+			.@mid = getd("#Mission"+.@i);
+			.@done = getd("#Mission"+.@i+"_");
+			mes " > " + ((.@done >= #MissionAmount) ? "^00FF00" : "^FF0000")
+			    + getmonsterinfo(.@mid, MOB_NAME)
+			    + " ("+.@done+"/"+#MissionAmount+")^000000";
+
+			if (.@done >= #MissionAmount)
+				.@complete++;
 		}
 		next;
+
 		switch(select("Lapor Selesai:Batalkan Misi:Tutup")) {
-			case 1:
-				if (.@complete < .Quests) {
-					mes "[Hunting Missions]";
-					mes "Kamu belum membunuh semua target!";
-					close;
-				}
-				callsub L_Reward;
-				break;
-			case 2:
-				callsub L_Reset;
+
+		case 1:
+			if (.@complete < #MissionCount) {
 				mes "[Hunting Missions]";
-				mes "Misi telah dibatalkan.";
+				mes "Target belum selesai!";
 				close;
-			case 3:
-				close;
+			}
+			callsub L_Reward;
+			close;
+
+		case 2:
+			callsub L_Reset;
+			mes "[Hunting Missions]";
+			mes "Misi dibatalkan.";
+			close;
+
+		case 3:
+			close;
 		}
 	}
 
-	switch(select("Ambil Misi:Tukar Poin:Informasi:Keluar")) {
-		case 1:
-			if (#Hunting_Cooldown > gettimetick(2)) {
-				mes "[Hunting Missions]";
-				mes "Cooldown aktif! Kamu bisa ambil misi lagi dalam:";
-				mes "^FF0000" + Time2Str(#Hunting_Cooldown) + "^000000";
-				close;
-			}
+	// =============================
+	// MENU UTAMA
+	// =============================
+	switch(select("Ambil Misi:Tukar Poin:Info:Keluar")) {
+
+	case 1:
+		if (#HuntingCooldown > gettimetick(2)) {
 			mes "[Hunting Missions]";
-			mes "Pilih kesulitan (10-20 Jenis Berbeda):";
-			next;
-			set .@diff, select("Easy:Normal:Hard (Mini Boss):Very Hard (MVP)");
-			callsub L_Generate, .@diff;
-			break;
-		case 2:
-			mes "[Hunting Missions]";
-			mes "Poin kamu: ^0000FF" + #HuntingPoint + "^000000";
-			next;
-
-			.@sel = select(
-				"Red Potion (5 Poin)",
-				"Yggdrasil Berry (50 Poin)",
-				"Battle Manual (100 Poin)",
-				"Bubble Gum (120 Poin)",
-				"Dead Branch (30 Poin)",
-				"Batal"
-			);
-
-			if (.@sel == 6) close;
-
-			setarray .@item[1], 501,607,12208,12210,604;
-			setarray .@cost[1], 5,50,100,120,30;
-
-			if (#HuntingPoint < .@cost[.@sel]) {
-				mes "[Hunting Missions]";
-				mes "Poin kamu tidak cukup.";
-				close;
-			}
-
-			#HuntingPoint -= .@cost[.@sel];
-			getitem .@item[.@sel], 1;
-
-			mes "[Hunting Missions]";
-			mes "Pembelian berhasil!";
+			mes "Cooldown aktif!";
+			mes "Sisa waktu:";
+			mes "^FF0000" + Time2Str(#HuntingCooldown) + "^000000";
 			close;
-		case 3:
-			mes "[Hunting Missions]";
-			mes "Aturan:";
-			mes "- Misi diambil per akun (12 jam sekali).";
-			mes "- Kamu harus membunuh beberapa JENIS monster berbeda.";
-			mes "- Hadiah berupa EXP, Poin, dan Random Box.";
-			close;
-		case 4:
-			close;
+		}
+
+		mes "[Hunting Missions]";
+		mes "Pilih tingkat kesulitan:";
+		next;
+
+		.@diff = select("Easy:Normal:Hard (Mini Boss):Very Hard (MVP)");
+		callsub L_Generate, .@diff;
+		close;
+
+	case 2:
+		mes "[Hunting Missions]";
+		mes "Poin kamu: ^0000FF" + #HuntingPoint + "^000000";
+		close;
+
+	case 3:
+		mes "[Hunting Missions]";
+		mes "Aturan:";
+		mes "- 1 misi / 12 jam";
+		mes "- Bunuh beberapa JENIS monster";
+		mes "- Hadiah EXP + Poin";
+		close;
+
+	case 4:
+		close;
 	}
+
 	end;
 
+	// =============================
+	// GENERATE MISSION
+	// =============================
 L_Generate:
-	#Mission_Difficulty = getarg(0);
 	callsub L_Reset;
 
-	if (#Mission_Difficulty == 1) { // EASY (10 Jenis)
-		.Quests = 10; #Mission_Amount = 10;
-		// Daftar ID: Poring, Fabre, Lunatic, Picky, Chonchon, Willow, Condor, Spore, Zombie, Poporing, Rocker, Culvert Bug, etc.
-		setarray .@m[0], 1002,1001,1015,1016,1102,1004,1005,1007,1008,1011,1012,1013,1014,1020,1023,1030,1049,1063,1097,1107;
-	} else if (#Mission_Difficulty == 2) { // NORMAL (20 Jenis)
-		.Quests = 20; #Mission_Amount = 15;
-		// Daftar ID: Orc Warrior, High Orc, Verit, Matyr, Marduk, Raydric, Khalitzburg, Minorous, Sidewinder, Petite, etc.
-		setarray .@m[0], 1113,1111,1112,1115,1152,1119,1118,1117,1110,1109,1031,1032,1035,1044,1045,1047,1048,1056,1057,1068,1104,1105,1106,1213,1240;
-	} else if (#Mission_Difficulty == 3) { // HARD (5 Mini Boss)
-		.Quests = 5; #Mission_Amount = 1;
-		// Daftar ID: Angeling, Deviling, Ghostring, Mastering, Toad, Dragon Fly, Vagabond Wolf, Eclipse, Vocal.
-		setarray .@m[0], 1096,1588,1120,1101,1190,1241,1272,1388,1089,1252;
-	} else if (#Mission_Difficulty == 4) { // VERY HARD (3 MVP)
-		.Quests = 3; #Mission_Amount = 1;
-		// Daftar ID: Baphomet, Osiris, Doppelganger, Drake, Phreeoni, Maya, Moonlight, Eddga, Orc Hero, Orc Lord.
-		setarray .@m[0], 1039,1038,1059,1041,1159,1147,1150,1112,1115,1273,1389,1373;
+	#MissionDifficulty = getarg(0);
+
+	if (#MissionDifficulty == 1) {
+		#MissionCount = 10; #MissionAmount = 10;
+		setarray .@mob[0], 1002,1001,1015,1016,1102,1004,1005,1007,1008,1011,1012,1013;
+	}
+	else if (#MissionDifficulty == 2) {
+		#MissionCount = 20; #MissionAmount = 15;
+		setarray .@mob[0], 1113,1111,1112,1115,1152,1119,1118,1117,1110,1109,1031,1032,1035;
+	}
+	else if (#MissionDifficulty == 3) {
+		#MissionCount = 5; #MissionAmount = 1;
+		setarray .@mob[0], 1096,1588,1120,1101,1190,1241,1272,1388,1089;
+	}
+	else if (#MissionDifficulty == 4) {
+		#MissionCount = 3; #MissionAmount = 1;
+		setarray .@mob[0], 1039,1038,1059,1041,1159,1147,1150,1115,1273;
 	}
 
-	// Memilih monster acak agar tidak ada duplikat dalam satu sesi misi
-	for (.@i = 0; .@i < .Quests; .@i++) {
-		.@pick = .@m[rand(getarraysize(.@m))];
-		// Hindari duplikat ID di daftar yang sama
+	for (.@i = 0; .@i < #MissionCount; .@i++) {
+
+		.@pick = .@mob[rand(getarraysize(.@mob))];
+
 		for (.@j = 0; .@j < .@i; .@j++) {
-			if (getd("Mission"+.@j) == .@pick) { .@i--; .@retry = 1; break; }
+			if (getd("#Mission"+.@j) == .@pick) {
+				.@i--;
+				break;
+			}
 		}
-		if (.@retry) { .@retry = 0; continue; }
-		
-		setd "Mission" + .@i, .@pick;
-		setd "Mission" + .@i + "_", 0;
+
+		setd "#Mission"+.@i, .@pick;
+		setd "#Mission"+.@i+"_", 0;
 	}
-	
-	Mission0 = 1; 
-	#Hunting_Cooldown = gettimetick(2) + 43200; // Cooldown 12 Jam
+
+	#MissionActive = 1;
+	#HuntingCooldown = gettimetick(2) + 43200;
 
 	mes "[Hunting Missions]";
 	mes "Misi berhasil dibuat!";
-	mes "Silakan cek daftar targetmu.";
-	close;
+	mes "Cek kembali NPC untuk melihat target.";
+	return;
 
+	// =============================
+	// REWARD
+	// =============================
 L_Reward:
-	if (#Mission_Difficulty == 1) { .@p = 5;  .@exp = 200000; }
-	else if (#Mission_Difficulty == 2) { .@p = 10; .@exp = 600000; }
-	else if (#Mission_Difficulty == 3) { .@p = 15; .@exp = 2000000; }
-	else if (#Mission_Difficulty == 4) { .@p = 20; .@exp = 10000000; }
+	if (#MissionDifficulty == 1) { .@p = 5;  .@exp = 200000; }
+	else if (#MissionDifficulty == 2) { .@p = 10; .@exp = 600000; }
+	else if (#MissionDifficulty == 3) { .@p = 15; .@exp = 2000000; }
+	else if (#MissionDifficulty == 4) { .@p = 20; .@exp = 10000000; }
 
 	#HuntingPoint += .@p;
 	BaseExp += .@exp;
-	JobExp += .@exp;
-	getitem 12221, 1; // Hadiah Box
+	JobExp  += .@exp;
 
 	mes "[Hunting Missions]";
-	mes "Selamat! Kamu menerima:";
-	mes " > " + .@p + " Poin Misi";
+	mes "Hadiah diterima:";
+	mes " > " + .@p + " Poin";
 	mes " > " + F_InsertComma(.@exp) + " EXP";
-	mes " > 1x Gift Box";
+
 	callsub L_Reset;
 	specialeffect2 EF_ANGEL;
-	close;
-
-L_Reset:
-	for (.@i = 0; .@i < 20; .@i++) {
-		setd "Mission" + .@i, 0;
-		setd "Mission" + .@i + "_", 0;
-	}
-	Mission0 = 0; #Mission_Difficulty = 0;
 	return;
 
+	// =============================
+	// RESET
+	// =============================
+L_Reset:
+	for (.@i = 0; .@i < 25; .@i++) {
+		setd "#Mission"+.@i, 0;
+		setd "#Mission"+.@i+"_", 0;
+	}
+	#MissionActive = 0;
+	#MissionCount = 0;
+	#MissionAmount = 0;
+	#MissionDifficulty = 0;
+	return;
+
+	// =============================
+	// KILL EVENT
+	// =============================
 OnNPCKillEvent:
-	if (Mission0 <= 0) end;
-	// Cek apakah monster yang mati ada di dalam daftar misi karakter
-	for (.@i = 0; .@i < 20; .@i++) {
-		if (killedrid == getd("Mission" + .@i)) {
-			if (getd("Mission" + .@i + "_") < #Mission_Amount) {
-				setd "Mission" + .@i + "_", getd("Mission" + .@i + "_") + 1;
-				dispbottom "[Mission] " + getmonsterinfo(killedrid, MOB_NAME) + " (" + getd("Mission" + .@i + "_") + "/" + #Mission_Amount + ")";
-				break;
+	if (!#MissionActive) end;
+
+	for (.@i = 0; .@i < #MissionCount; .@i++) {
+		if (killedrid == getd("#Mission"+.@i)) {
+
+			if (getd("#Mission"+.@i+"_") < #MissionAmount) {
+				setd "#Mission"+.@i+"_", getd("#Mission"+.@i+"_") + 1;
+				dispbottom "[Mission] " + getmonsterinfo(killedrid, MOB_NAME)
+					+ " (" + getd("#Mission"+.@i+"_") + "/" + #MissionAmount + ")";
 			}
+			break;
 		}
-	}
-	end;
-	
-OnBuyItem:
-	// Cek poin
-	if (#HuntingPoint < @totalcost) {
-		dispbottom "[Hunting Missions] Poin kamu tidak cukup.";
-		end;
-	}
-
-	// Kurangi poin
-	#HuntingPoint -= @totalcost;
-
-	// Berikan item satu per satu
-	for (.@i = 0; .@i < @itemcount; .@i++) {
-		getitem @itemid[.@i], @amount[.@i];
-	}
-
-	dispbottom "[Hunting Missions] Pembelian berhasil!";
-	end;
-
-OnInit:
-	// Pengaturan Toko Penukaran Poin
-	setarray .ShopItems[0], 501, 607, 12208, 12210, 604; 
-	setarray .ShopPrices[0], 5, 50, 100, 120, 30;
-
-	npcshopdelitem "hunting_shop_visual", 512;
-	for (.@i = 0; .@i < getarraysize(.ShopItems); .@i++) {
-		npcshopadditem "hunting_shop_visual", .ShopItems[.@i], .ShopPrices[.@i];
 	}
 	end;
 }
